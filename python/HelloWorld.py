@@ -80,5 +80,5 @@ if __name__ == '__main__':
     data = getCopyTxet()
     #print("粘贴板有新内容：" + data) #则打印粘贴板信息
     threading.stack_size(200000000)
-    thread = threading.Thread(target=search,args=(sys.argv[1],sys.argv[2]))#sys.argv[1]
+    thread = threading.Thread(target=search,args=(sys.argv[1],sys.argv[2]))#sys.argv[1] "D:\\G66UI\\ui\\project","2"
     thread.start()

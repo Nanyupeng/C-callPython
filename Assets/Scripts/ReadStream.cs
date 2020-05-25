@@ -10,6 +10,7 @@ public class ReadStream : MonoBehaviour
     internal string currCopy;
     internal string copyBuffer;
     internal Button search_btn;
+    internal Button put_btn;
     public SimplePool smallpool;
     internal Transform smallpoolParent;
     internal Text copyTxt;
@@ -17,14 +18,19 @@ public class ReadStream : MonoBehaviour
     internal Toggle csdtog;
     internal Toggle nodenametog;
     internal string arg = "1";
+    private List<GameObject> gamesList = new List<GameObject>();
+    internal LayoutManager layoutManager;
     private void Awake()
     {
+        layoutManager = GetComponent<LayoutManager>();
+        put_btn = transform.Find("Put_btn").GetComponent<Button>();
+        put_btn.onClick.AddListener(layoutManager.HideTaskBar);
         search_btn = transform.Find("search_btn").GetComponent<Button>();
         search_btn.onClick.AddListener(() =>
         {
             for (int i = 0; i < gamesList.Count; i++)
             {
-                smallpool.push(gamesList[i]);
+                gamesList[i].GetComponent<ListPre>().pushthis();
             }
             gamesList.Clear();
             GetSytemCopy();
@@ -48,9 +54,13 @@ public class ReadStream : MonoBehaviour
     void GetSytemCopy()
     {
         var workdir = Environment.CurrentDirectory + "/python/";
-        var results = EdtUtil.RunCmd("python", workdir + "HelloWorld.py " + ReadTargetDirectory() + " " + arg, workdir);
+        var results = EdtUtil.RunCmd("python", workdir + "HelloWorld.py " + @"D:\G66UI\ui\project\"/*ReadTargetDirectory()*/ + " " + arg, workdir);
         //Debug.Log("python output: " + results[0]);
         //Debug.Log("python error: " + results[1]);
+        if (results[1].Contains("Python was not found"))
+        {
+            Debug.Log("找不到Python或缺少'win32clipboard'请查看操作文档");
+        }
         if (results[1].Contains("Specified clipboard format is not available"))
         {
             copyTxt.text = "亲 复制失败，再试一次吧！";
@@ -65,7 +75,7 @@ public class ReadStream : MonoBehaviour
             string rec = results[0].Split('\n')[i];
             GameObject games = smallpool.pop();
             ItemInfo json = JsonUtility.FromJson<ItemInfo>(rec.Replace("\'", "\""));
-            games.GetComponent<ListPre>().InitInfo(json.name, json.path);
+            games.GetComponent<ListPre>().InitInfo(json.name, json.path, smallpool);
             games.transform.SetParent(smallpoolParent);
             gamesList.Add(games);
         }
@@ -129,28 +139,27 @@ public class ReadStream : MonoBehaviour
     /// </summary>
     /// <param name="path"></param>
     #region
-    private List<GameObject> gamesList = new List<GameObject>();
-    void OpenCCS(string path, string rootname)
-    {
-        string[] readtext = File.ReadAllLines(path);
-        for (int i = 0; i < readtext.Length; i++)
-        {
-            if (readtext[i].Contains(currCopy))//进行内容对比
-            {
-                //Debug.Log("目标工程路径" + path);
-                GameObject games = smallpool.pop();
-                games.GetComponent<ListPre>().InitInfo(readtext[i].Split('"')[1], path.Substring(0, path.Length - rootname.Length));
-                games.transform.SetParent(smallpoolParent);
-                games.SetActive(true);
-                gamesList.Add(games);
-            }
-            else
-            {
-                //fail.SetActive(true);
-                //Debug.Log("不存在(---" + currCopy + "---)次画布");
-            }
-        }
-    }
+    //void OpenCCS(string path, string rootname)
+    //{
+    //    string[] readtext = File.ReadAllLines(path);
+    //    for (int i = 0; i < readtext.Length; i++)
+    //    {
+    //        if (readtext[i].Contains(currCopy))//进行内容对比
+    //        {
+    //            //Debug.Log("目标工程路径" + path);
+    //            GameObject games = smallpool.pop();
+    //            games.GetComponent<ListPre>().InitInfo(readtext[i].Split('"')[1], path.Substring(0, path.Length - rootname.Length));
+    //            games.transform.SetParent(smallpoolParent);
+    //            games.SetActive(true);
+    //            gamesList.Add(games);
+    //        }
+    //        else
+    //        {
+    //            //fail.SetActive(true);
+    //            //Debug.Log("不存在(---" + currCopy + "---)次画布");
+    //        }
+    //    }
+    //}
     #endregion
 }
 [Serializable]
