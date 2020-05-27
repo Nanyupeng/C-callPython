@@ -20,9 +20,11 @@ public class ReadStream : MonoBehaviour
     internal string arg = "1";
     private List<GameObject> gamesList = new List<GameObject>();
     internal LayoutManager layoutManager;
+    internal GameObject textAnim;
     private void Awake()
     {
         layoutManager = GetComponent<LayoutManager>();
+        textAnim = transform.Find("Textanim").gameObject;
         put_btn = transform.Find("Put_btn").GetComponent<Button>();
         put_btn.onClick.AddListener(layoutManager.HideTaskBar);
         search_btn = transform.Find("search_btn").GetComponent<Button>();
@@ -48,6 +50,17 @@ public class ReadStream : MonoBehaviour
 
         InvokeRepeating("UpdateCopy", 1, 1);
     }
+
+    void UpdateCopy()
+    {
+        copyBuffer= GUIUtility.systemCopyBuffer;
+        if (currCopy!=copyBuffer)
+        {
+            currCopy = copyBuffer;
+            copyTxt.text = currCopy;
+        }
+    }
+
     /// <summary>
     /// 获取系统拷贝内容
     /// </summary>
@@ -57,8 +70,9 @@ public class ReadStream : MonoBehaviour
         var results = EdtUtil.RunCmd("python", workdir + "HelloWorld.py " + @"D:\G66UI\ui\project\"/*ReadTargetDirectory()*/ + " " + arg, workdir);
         //Debug.Log("python output: " + results[0]);
         //Debug.Log("python error: " + results[1]);
-        if (results[1].Contains("Python was not found"))
+        if (results[1].Contains("Python was not found") && !textAnim.activeSelf)
         {
+            StartCoroutine(settipsAnim());
             Debug.Log("找不到Python或缺少'win32clipboard'请查看操作文档");
         }
         if (results[1].Contains("Specified clipboard format is not available"))
@@ -88,14 +102,12 @@ public class ReadStream : MonoBehaviour
         }
     }
 
-    void UpdateCopy()
+    IEnumerator settipsAnim()
     {
-        copyBuffer = GUIUtility.systemCopyBuffer;
-        if (currCopy != copyBuffer)
-        {
-            currCopy = copyBuffer;
-            copyTxt.text = currCopy;
-        }
+        textAnim.SetActive(true);
+        Animator anim = textAnim.GetComponent<Animator>();
+        yield return new WaitForSecondsRealtime(anim.GetCurrentAnimatorStateInfo(0).length);
+        textAnim.SetActive(false);
     }
 
     /// <summary>
